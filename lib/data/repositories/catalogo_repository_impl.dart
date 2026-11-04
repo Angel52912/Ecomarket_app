@@ -11,7 +11,8 @@ class CatalogoRepositoryImpl implements CatalogoRepository {
 
   @override
   Future<List<Producto>> obtenerCatalogo() async {
-    final modelos = await _dataSource.obtenerCatalogo();
+    // Rol 4 renombró el datasource a fetchProductos() (B2.1 del ROL 4).
+    final modelos = await _dataSource.fetchProductos();
     // Ya son Producto (ProductoModel extiende Producto): se exponen como
     // lista inmutable para que nadie las altere desde afuera.
     return List<Producto>.unmodifiable(modelos);
