@@ -1,13 +1,14 @@
-// NOTA (Rol 1): stub mínimo para desbloquear `flutter analyze` y la demo.
-// El Rol 4 debe reemplazarlo por su implementación real.
 import '../../domain/entities/estado_entrega.dart';
 import '../../domain/repositories/entrega_repository.dart';
 import '../datasources/entrega_gps_datasource.dart';
 
+/// Implementación concreta del contrato `EntregaRepository` (Rol 1).
+/// Traduce el lenguaje del datasource (`rastrear`) al del dominio
+/// (`seguirEntrega`): `data` habla el idioma de `domain`, no al revés.
 class EntregaRepositoryImpl implements EntregaRepository {
-  final EntregaGpsDataSource _dataSource;
-  EntregaRepositoryImpl(this._dataSource);
+  final EntregaGpsDataSource _gps;
+  const EntregaRepositoryImpl(this._gps);
 
   @override
-  Stream<EstadoEntrega> seguirEntrega() => _dataSource.seguirEntrega();
+  Stream<EstadoEntrega> seguirEntrega() => _gps.rastrear();
 }
