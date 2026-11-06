@@ -1,13 +1,18 @@
-// NOTA (Rol 1 → coordinado con Rol 4): esta vista sigue siendo un stub del
-// Rol 2. El Rol 4 integró aquí el `CatalogoFutureGate` (B2.4) y un puente
-// temporal hacia `SeguimientoView`, porque el checkout real es del Rol 3.
 import 'package:flutter/material.dart';
 
 import '../../domain/usecases/seguir_entrega.dart';
 import '../controllers/catalogo_controller.dart';
-import '../views/seguimiento_view.dart';
 import '../widgets/catalogo_future_gate.dart';
+import '../widgets/categorias_wrap.dart';
+import '../widgets/producto_card.dart';
+import 'checkout_view.dart';
+import 'seguimiento_view.dart';
 
+/// Pantalla principal del catálogo (Rol 2).
+///
+/// Un **solo scroll** (`CustomScrollView`) con `SliverAppBar` fijo, chips en
+/// `Wrap` y un `SliverGrid` responsivo. La vista no contiene lógica de
+/// negocio: solo lee el `CatalogoController` y le manda mensajes.
 class CatalogoView extends StatefulWidget {
   final CatalogoController controller;
   final SeguirEntrega seguirEntrega;
@@ -23,67 +28,179 @@ class CatalogoView extends StatefulWidget {
 }
 
 class _CatalogoViewState extends State<CatalogoView> {
-  // ⚠️ El Future se crea UNA sola vez, fuera de `build()`.
-  // Si se creara dentro de build(), cada redibujado relanzaría la petición.
-  // No es `final` precisamente porque `onRetry` lo reemplaza con uno nuevo.
+  // ⚠️ El Future se crea UNA sola vez, fuera de `build()` (Rol 4).
+  // No es `final` porque `onRetry` lo reemplaza con uno nuevo.
   late Future<void> _carga = widget.controller.cargarCatalogo();
 
   void _reintentar() {
     setState(() => _carga = widget.controller.cargarCatalogo());
   }
 
-  void _verSeguimiento() {
-    Navigator.of(context).push(
-      MaterialPageRoute<void>(
-        builder: (_) => SeguimientoView(seguirEntrega: widget.seguirEntrega),
-      ),
-    );
+  void _reabastecer() {
+    widget.controller.reabastecer();
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(const SnackBar(content: Text('Stock rellenado')));
   }
 
   @override
   Widget build(BuildContext context) {
+    final c = widget.controller;
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('EcoMarket'),
-        // Puente temporal hasta que el Rol 3 conecte el pago real.
-        actions: [
-          IconButton(
-            tooltip: 'Seguimiento de entrega',
-            onPressed: _verSeguimiento,
-            icon: const Icon(Icons.delivery_dining),
-          ),
-        ],
-      ),
-      // La compuerta maneja carga / error / datos; el catálogo nunca
-      // bloquea el hilo de UI (el retardo vive en el datasource).
       body: CatalogoFutureGate(
         future: _carga,
         onRetry: _reintentar,
         child: ListenableBuilder(
-          listenable: widget.controller,
-          builder: (context, _) {
-            final visibles = widget.controller.productosVisibles;
-            if (visibles.isEmpty) {
-              return const Center(child: Text('Sin productos disponibles'));
-            }
-            return ListView.builder(
-              itemCount: visibles.length,
-              itemBuilder: (context, i) {
-                final p = visibles[i];
-                return ListTile(
-                  title: Text(p.nombre),
-                  subtitle: Text('${p.categoria} · \$${p.precio}'),
-                  trailing: Text(p.agotado ? 'Agotado' : 'Stock: ${p.stock}'),
-                );
-              },
-            );
-          },
+          listenable: c,
+          builder: (context, _) => CustomScrollView(
+            slivers: [
+              SliverAppBar(
+                pinned: true, // la barra queda fija al hacer scroll
+                expandedHeight: 140,
+                actions: [
+                  IconButton(
+                    tooltip: 'Seguimiento de entrega',
+                    icon: const Icon(Icons.delivery_dining),
+                    onPressed: () => Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) => SeguimientoView(
+                          seguirEntrega: widget.seguirEntrega,
+                        ),
+                      ),
+                    ),
+                  ),
+                  _CarritoAction(
+                    controller: c,
+                    seguirEntrega: widget.seguirEntrega,
+                  ),
+                ],
+                flexibleSpace: FlexibleSpaceBar(
+                  title: const Text('EcoMarket'),
+                  titlePadding:
+                      const EdgeInsetsDirectional.only(start: 16, bottom: 14),
+                  background: Align(
+                    alignment: AlignmentDirectional.bottomStart,
+                    child: Padding(
+                      padding: const EdgeInsetsDirectional.only(
+                        start: 16,
+                        bottom: 52,
+                      ),
+                      child: Text(
+                        'Productos sustentables',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onSurfaceVariant,
+                            ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              SliverToBoxAdapter(
+                child: CategoriasWrap(
+                  categorias: c.categorias,
+                  activa: c.categoriaActiva,
+                  onSeleccion: (v) => c.categoriaActiva = v,
+                ),
+              ),
+              if (c.productosVisibles.isEmpty)
+                const SliverFillRemaining(
+                  hasScrollBody: false,
+                  child: Center(child: Text('Sin productos disponibles')),
+                )
+              else
+                _GridProductos(controller: c),
+              // Espacio para que el FAB no tape la última fila
+              const SliverToBoxAdapter(child: SizedBox(height: 96)),
+            ],
+          ),
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: widget.controller.reabastecer,
-        child: const Icon(Icons.refresh),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: _reabastecer,
+        icon: const Icon(Icons.inventory_2),
+        label: const Text('Rellenar Stock'),
       ),
     );
   }
+}
+
+/// `SliverGrid` responsivo: `childAspectRatio` fijo en 0.65 (ancho/alto) y
+/// número de columnas según el ancho real del viewport.
+class _GridProductos extends StatelessWidget {
+  final CatalogoController controller;
+  const _GridProductos({required this.controller});
+
+  static int columnas(double ancho) {
+    if (ancho >= 1200) return 5;
+    if (ancho >= 900) return 4;
+    if (ancho >= 600) return 3;
+    return 2; // teléfonos
+  }
+
+  void _agregar(BuildContext context, int i) {
+    final productos = controller.productosVisibles;
+    final error = controller.agregarAlCarrito(productos[i]);
+    if (error == null) return;
+    final cs = Theme.of(context).colorScheme;
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(
+        content: Text(error, style: TextStyle(color: cs.onErrorContainer)),
+        backgroundColor: cs.errorContainer,
+      ));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final productos = controller.productosVisibles;
+    // SliverLayoutBuilder da el ancho real disponible dentro del sliver
+    return SliverLayoutBuilder(
+      builder: (context, constraints) => SliverPadding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        sliver: SliverGrid(
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: columnas(constraints.crossAxisExtent),
+            crossAxisSpacing: 12,
+            mainAxisSpacing: 12,
+            childAspectRatio: 0.65,
+          ),
+          // "Bajo demanda": solo se construyen las tarjetas visibles
+          delegate: SliverChildBuilderDelegate(
+            (context, i) => ProductoCard(
+              producto: productos[i],
+              onAgregar: () => _agregar(context, i),
+            ),
+            childCount: productos.length,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Icono del carrito con `Badge` reactivo; abre el checkout (Rol 3).
+class _CarritoAction extends StatelessWidget {
+  final CatalogoController controller;
+  final SeguirEntrega seguirEntrega;
+  const _CarritoAction({required this.controller, required this.seguirEntrega});
+
+  @override
+  Widget build(BuildContext context) => IconButton(
+        tooltip: 'Carrito',
+        icon: Badge(
+          isLabelVisible: controller.totalItems > 0,
+          label: Text('${controller.totalItems}'),
+          child: const Icon(Icons.shopping_cart_outlined),
+        ),
+        onPressed: () => Navigator.of(context).push(MaterialPageRoute<void>(
+          builder: (_) => CheckoutView(
+            controller: controller,
+            seguirEntrega: seguirEntrega,
+          ),
+        )),
+      );
 }
