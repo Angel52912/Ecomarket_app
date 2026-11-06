@@ -5,6 +5,7 @@ import '../controllers/catalogo_controller.dart';
 import '../widgets/catalogo_future_gate.dart';
 import '../widgets/categorias_wrap.dart';
 import '../widgets/producto_card.dart';
+import 'checkout_view.dart';
 import 'seguimiento_view.dart';
 
 /// Pantalla principal del catálogo (Rol 2).
@@ -68,7 +69,10 @@ class _CatalogoViewState extends State<CatalogoView> {
                       ),
                     ),
                   ),
-                  _CarritoAction(controller: c),
+                  _CarritoAction(
+                    controller: c,
+                    seguirEntrega: widget.seguirEntrega,
+                  ),
                 ],
                 flexibleSpace: FlexibleSpaceBar(
                   title: const Text('EcoMarket'),
@@ -178,13 +182,11 @@ class _GridProductos extends StatelessWidget {
   }
 }
 
-/// Icono del carrito con `Badge` reactivo (cantidad de artículos).
-///
-/// TODO(rol3): al existir `CheckoutView`, reemplazar el SnackBar por:
-/// `Navigator.push(MaterialPageRoute(builder: (_) => CheckoutView(...)))`.
+/// Icono del carrito con `Badge` reactivo; abre el checkout (Rol 3).
 class _CarritoAction extends StatelessWidget {
   final CatalogoController controller;
-  const _CarritoAction({required this.controller});
+  final SeguirEntrega seguirEntrega;
+  const _CarritoAction({required this.controller, required this.seguirEntrega});
 
   @override
   Widget build(BuildContext context) => IconButton(
@@ -194,13 +196,11 @@ class _CarritoAction extends StatelessWidget {
           label: Text('${controller.totalItems}'),
           child: const Icon(Icons.shopping_cart_outlined),
         ),
-        onPressed: () => ScaffoldMessenger.of(context)
-          ..hideCurrentSnackBar()
-          ..showSnackBar(SnackBar(
-            content: Text(
-              'Carrito: ${controller.totalItems} artículo(s) · '
-              'Total \$${controller.total.toStringAsFixed(2)}',
-            ),
-          )),
+        onPressed: () => Navigator.of(context).push(MaterialPageRoute<void>(
+          builder: (_) => CheckoutView(
+            controller: controller,
+            seguirEntrega: seguirEntrega,
+          ),
+        )),
       );
 }
