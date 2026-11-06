@@ -4,14 +4,14 @@
 **Sprint:** comprimido a **1 solo día** (en el documento original son 3)
 **Restricciones globales:** Clean Architecture · diseño **oscuro** · **responsive** · prohibido mezclar código de capas
 
----
+***
 
-## 1. Misión
+## 1\. Misión
 
 Eres el dueño de la **estructura del proyecto** y del **estado en RAM**. Si tu parte se retrasa, el resto del equipo se bloquea, así que tu primera entrega (Bloque 1) es el **contrato** que los demás usarán: carpetas, entidades e interfaces.
 
 | Responsabilidad | Entregable |
-|---|---|
+| --------------- | ---------- |
 | Estructura física de capas | `lib/data/`, `lib/domain/`, `lib/presentation/` (+ `lib/core/`) |
 | Entidades inmutables con `assert` | `Producto`, `ItemCarrito`, `EstadoEntrega` |
 | Getters/setters computados | `agotado`, `subtotal`, `total`, `totalItems`, filtro de categoría |
@@ -19,9 +19,9 @@ Eres el dueño de la **estructura del proyecto** y del **estado en RAM**. Si tu 
 | Repositorio de catálogo (implementación) | `CatalogoRepositoryImpl` |
 | Higiene del repo | `.gitignore`, repo privado, docente como colaborador, README |
 
----
+***
 
-## 2. Arquitectura que debes imponer
+## 2\. Arquitectura que debes imponer
 
 ```
 lib/
@@ -66,26 +66,26 @@ presentation  ──►  domain  ◄──  data
 (widgets, controller)  (entidades, contratos, casos de uso)  (datasources, models, repos impl)
 ```
 
-- `domain` **no importa** nada de `data` ni `presentation` (ni `flutter`).
-- `data` implementa las interfaces de `domain`.
-- `presentation` solo habla con `domain` (casos de uso / entidades). **Ningún widget** llama a un datasource ni calcula reglas de negocio.
+* `domain` **no importa** nada de `data` ni `presentation` (ni `flutter`).
+* `data` implementa las interfaces de `domain`.
+* `presentation` solo habla con `domain` (casos de uso / entidades). **Ningún widget** llama a un datasource ni calcula reglas de negocio.
 
 > Verificación rápida: `grep -rn "package:flutter" lib/domain` debe devolver **cero** resultados.
 
----
+***
 
-## 3. Plan de trabajo en UN día
+## 3\. Plan de trabajo en UN día
 
 | Bloque | Duración | Tu trabajo |
-|---|---|---|
+| ------ | -------- | ---------- |
 | **B1 – Esqueleto** | 0:00 – 1:00 | Crear proyecto, carpetas, `.gitignore`, entidades, interfaces, `main.dart` mínimo. **Push a `main` y avisar al equipo.** |
 | **B2 – Núcleo** | 1:00 – 3:00 | `CatalogoController`, casos de uso, `CatalogoRepositoryImpl`, `ProductoModel`, inyección manual |
 | **B3 – Integración** | 3:00 – 5:00 | Mutación de stock en checkout, vaciado reactivo del carrito, `reabastecer()`, apoyar merges |
 | **B4 – Cierre** | 5:00 – 6:00 | Auditoría de capas, README, revisión de commits, entrega del repo |
 
----
+***
 
-## 4. Paso a paso
+## 4\. Paso a paso
 
 ### B1.1 Crear proyecto
 
@@ -376,9 +376,9 @@ class EcoMarketApp extends StatelessWidget {
 
 Mínimo **8 productos**, 3–4 categorías (p. ej. Hogar, Higiene, Alimentos, Accesorios), **al menos uno con `stock: 1`** y otro con `stock: 0` para la prueba de estrés, y al menos uno con `imagenUrl: null` para demostrar `errorBuilder`.
 
----
+***
 
-## 5. Convención de commits (la rúbrica lee el historial)
+## 5\. Convención de commits \(la rúbrica lee el historial\)
 
 Como todo ocurre en un día, la evidencia es el **historial por bloques**. Haz commits pequeños y frecuentes con prefijo de rol:
 
@@ -392,24 +392,24 @@ docs(rol1): README con diagrama de capas
 
 Tus archivos son **solo** los marcados “Rol 1”. Si necesitas tocar un archivo de otro rol, pídeselo o hazlo en un commit separado que lo explique.
 
----
+***
 
-## 6. Checklist de cierre (B4)
+## 6\. Checklist de cierre \(B4\)
 
-- [ ] `git status` limpio y `build/` **no** está en el repo
-- [ ] `grep -rn "package:flutter" lib/domain` → sin resultados
-- [ ] Ningún widget importa `data/` (`grep -rn "data/" lib/presentation` → sin resultados)
-- [ ] `Producto(stock: -1)` lanza `AssertionError` en debug
-- [ ] `confirmarPago()` con stock insuficiente **no modifica nada** (atomicidad)
-- [ ] Un solo `notifyListeners()` por operación
-- [ ] Docente agregado como colaborador del repo privado
-- [ ] `flutter analyze` sin errores
-- [ ] README con: integrantes/roles, diagrama de capas, cómo correr, decisiones
+* [ ] `git status` limpio y `build/` **no** está en el repo
+* [ ] `grep -rn "package:flutter" lib/domain` → sin resultados
+* [ ] Ningún widget importa `data/` (`grep -rn "data/" lib/presentation` → sin resultados)
+* [ ] `Producto(stock: -1)` lanza `AssertionError` en debug
+* [ ] `confirmarPago()` con stock insuficiente **no modifica nada** (atomicidad)
+* [ ] Un solo `notifyListeners()` por operación
+* [ ] Docente agregado como colaborador del repo privado
+* [ ] `flutter analyze` sin errores
+* [ ] README con: integrantes/roles, diagrama de capas, cómo correr, decisiones
 
-## 7. Rúbrica que te evalúa (Arquitectura de Capas)
+## 7\. Rúbrica que te evalúa \(Arquitectura de Capas\)
 
 | Nivel | Condición |
-|---|---|
+| ----- | --------- |
 | **10** | Capas rigurosas; lógica y píxeles completamente aislados |
 | 8 | Hay carpetas pero hay fugas de lógica en widgets |
 | 5 | Todo mezclado en un archivo de UI |

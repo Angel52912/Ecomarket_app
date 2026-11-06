@@ -8,10 +8,10 @@ class ResultadoCompra {
   final List<Producto> catalogoActualizado;
 
   const ResultadoCompra.ok(this.catalogoActualizado)
-      : exito = true,
-        error = null;
+    : exito = true,
+      error = null;
   const ResultadoCompra.fallo(this.error, this.catalogoActualizado)
-      : exito = false;
+    : exito = false;
 }
 
 /// Caso de uso con la **regla de negocio pura**: recibe catálogo + carrito y
@@ -21,13 +21,14 @@ class ConfirmarCompra {
   const ConfirmarCompra();
 
   ResultadoCompra call(List<Producto> catalogo, List<ItemCarrito> carrito) {
-    // 1) Validar TODO antes de mutar nada (atomicidad)
+    // 1) Validar antes de mutar nada (atomicidad)
     for (final item in carrito) {
       final real = catalogo.firstWhere((p) => p.id == item.producto.id);
       if (!real.hayStockPara(item.cantidad)) {
         return ResultadoCompra.fallo(
-            'Stock insuficiente de "${real.nombre}" (disponible: ${real.stock})',
-            catalogo);
+          'Stock insuficiente de "${real.nombre}" (disponible: ${real.stock})',
+          catalogo,
+        );
       }
     }
 
