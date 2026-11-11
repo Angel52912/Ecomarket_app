@@ -42,6 +42,7 @@ Widget construirAppDePrueba({double escalaTexto = 1.0}) {
   final app = EcoMarketApp(
     controller: _controller(),
     seguirEntrega: SeguirEntrega(_EntregaFalsa()),
+    mostrarPresentacion: false, // este test cubre el catálogo, no el splash
   );
   if (escalaTexto == 1.0) return app;
   return Builder(

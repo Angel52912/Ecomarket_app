@@ -9,6 +9,7 @@ import 'data/repositories/entrega_repository_impl.dart';
 import 'domain/usecases/seguir_entrega.dart';
 import 'presentation/controllers/catalogo_controller.dart';
 import 'presentation/views/catalogo_view.dart';
+import 'presentation/views/presentacion_view.dart';
 
 void main() {
   // Composición / inyección manual (Rol 1): aquí se decide qué implementación
@@ -26,10 +27,15 @@ class EcoMarketApp extends StatelessWidget {
   final CatalogoController controller;
   final SeguirEntrega seguirEntrega;
 
+  /// La pantalla de presentación se puede omitir (pruebas) para que la UI
+  /// de prueba arranque directo en el catálogo.
+  final bool mostrarPresentacion;
+
   const EcoMarketApp({
     super.key,
     required this.controller,
     required this.seguirEntrega,
+    this.mostrarPresentacion = true,
   });
 
   @override
@@ -39,6 +45,14 @@ class EcoMarketApp extends StatelessWidget {
         theme: AppTheme.dark,
         darkTheme: AppTheme.dark,
         themeMode: ThemeMode.dark, // diseño oscuro forzado
-        home: CatalogoView(controller: controller, seguirEntrega: seguirEntrega),
+        home: mostrarPresentacion
+            ? PresentacionView(
+                controller: controller,
+                seguirEntrega: seguirEntrega,
+              )
+            : CatalogoView(
+                controller: controller,
+                seguirEntrega: seguirEntrega,
+              ),
       );
 }
