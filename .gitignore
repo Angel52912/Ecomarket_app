@@ -51,3 +51,8 @@ app.*.map.json
 
 # Widget Preview related
 .widget_preview/
+
+# Exclusión obligatoria de llaves criptográficas y credenciales de firma
+*.jks
+*.keystore
+**/android/key.properties
